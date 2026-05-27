@@ -2,8 +2,10 @@ name: Water reminder
 
 on:
   schedule:
-    - cron: "0 3 * * *"
-    - cron: "0 7 * * *"
+    - cron: "0 2 * * *"
+    - cron: "0 4 * * *"
+    - cron: "0 6 * * *"
+    - cron: "0 10 * * *"
     - cron: "0 12 * * *"
   workflow_dispatch:
 
@@ -22,10 +24,12 @@ jobs:
           day_index="$(TZ=Asia/Shanghai date +%j)"
 
           case "$time" in
-            11:*) step="第 1 次"; progress="500 / 1500ml"; slot=0; emoji="☀️" ;;
-            15:*) step="第 2 次"; progress="1000 / 1500ml"; slot=1; emoji="🌤️" ;;
-            20:*) step="第 3 次"; progress="1500 / 1500ml"; slot=2; emoji="🌙" ;;
-            *) step="测试提醒"; progress="本次测试不计入进度"; slot=3; emoji="🧪" ;;
+            10:*) step="第 1 次"; progress="300 / 1500ml"; slot=0; emoji="☀️" ;;
+            12:*) step="第 2 次"; progress="600 / 1500ml"; slot=1; emoji="🍽️" ;;
+            14:*) step="第 3 次"; progress="900 / 1500ml"; slot=2; emoji="🌤️" ;;
+            18:*) step="第 4 次"; progress="1200 / 1500ml"; slot=3; emoji="🌆" ;;
+            20:*) step="第 5 次"; progress="1500 / 1500ml"; slot=4; emoji="🌙" ;;
+            *) step="测试提醒"; progress="本次测试不计入进度"; slot=5; emoji="🧪" ;;
           esac
 
           jokes=(
@@ -58,7 +62,7 @@ jobs:
           喝水时间到了。
 
           今天的 $step 喝水小任务 $emoji
-          本次建议：慢慢喝 500ml
+          本次建议：慢慢喝 300ml
           今日目标：1500ml
           当前进度：$progress
 
