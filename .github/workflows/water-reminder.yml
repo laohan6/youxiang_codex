@@ -56,6 +56,11 @@ jobs:
             echo "TODAY=$today"
             echo "TIME=$time"
             echo "SUBJECT=喝水提醒 · $time $emoji"
+            echo "STEP=$step"
+            echo "PROGRESS=$progress"
+            echo "EMOJI=$emoji"
+            echo "JOKE=$joke"
+            echo "ENCOURAGEMENT=$encouragement"
           } >> "$GITHUB_ENV"
 
           cat > reminder-body.txt <<EOF
@@ -78,6 +83,7 @@ jobs:
           MAIL_TO: ${{ secrets.MAIL_TO }}
         run: |
           python3 <<'PY'
+          import html
           import os
           import smtplib
           import ssl
@@ -87,18 +93,71 @@ jobs:
           password = os.environ.get("SMTP_PASS", "").strip()
           mail_to = os.environ.get("MAIL_TO", "").strip()
           subject = os.environ.get("SUBJECT", "喝水提醒").strip()
+          step = os.environ.get("STEP", "第 1 次").strip()
+          progress = os.environ.get("PROGRESS", "300 / 1500ml").strip()
+          emoji = os.environ.get("EMOJI", "☀️").strip()
+          joke = os.environ.get("JOKE", "").strip()
+          encouragement = os.environ.get("ENCOURAGEMENT", "").strip()
 
           if not user or not password or not mail_to:
               raise SystemExit("Missing SMTP_USER, SMTP_PASS, or MAIL_TO secret.")
 
           with open("reminder-body.txt", "r", encoding="utf-8") as f:
-              body = f.read()
+              text_body = f.read()
+
+          safe_joke = html.escape(joke)
+          safe_encouragement = html.escape(encouragement)
+          safe_subject = html.escape(subject)
+          safe_step = html.escape(step)
+          safe_progress = html.escape(progress)
+          safe_email = html.escape(mail_to)
+
+          html_body = f"""\
+          <!doctype html>
+          <html lang="zh-CN">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin:0;background:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1f2937;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f6f8;padding:32px 12px;">
+              <tr>
+                <td align="center">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:22px 24px;border-bottom:1px solid #eef2f7;background:#fcfcfd;">
+                        <div style="font-size:12px;letter-spacing:.04em;color:#6b7280;margin-bottom:8px;">饭饭的提醒</div>
+                        <div style="font-size:22px;line-height:1.35;font-weight:700;color:#111827;">{safe_subject}</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:24px;">
+                        <div style="font-size:16px;line-height:1.8;margin-bottom:16px;">喝水时间到了。</div>
+                        <div style="border:1px solid #e5e7eb;border-radius:14px;padding:18px 18px 14px;background:#fafafa;margin-bottom:18px;">
+                          <div style="font-size:18px;line-height:1.5;font-weight:700;margin-bottom:8px;">今天的 {safe_step} 喝水小任务 {html.escape(emoji)}</div>
+                          <div style="font-size:15px;line-height:1.8;color:#374151;">本次建议：<strong>慢慢喝 300ml</strong></div>
+                          <div style="font-size:15px;line-height:1.8;color:#374151;">今日目标：<strong>1500ml</strong></div>
+                          <div style="font-size:15px;line-height:1.8;color:#374151;">当前进度：<strong>{safe_progress}</strong></div>
+                        </div>
+                        <div style="font-size:15px;line-height:1.9;color:#374151;margin-bottom:12px;">{safe_joke}</div>
+                        <div style="font-size:15px;line-height:1.9;color:#111827;font-weight:600;">{safe_encouragement}</div>
+                        <div style="margin-top:20px;font-size:12px;line-height:1.6;color:#9ca3af;">发送到：{safe_email}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
+          """
 
           msg = EmailMessage()
           msg["From"] = f"饭饭的提醒 <{user}>"
           msg["To"] = mail_to
           msg["Subject"] = subject
-          msg.set_content(body)
+          msg.set_content(text_body)
+          msg.add_alternative(html_body, subtype="html")
 
           context = ssl.create_default_context()
           with smtplib.SMTP_SSL("smtp.qq.com", 465, context=context, timeout=30) as smtp:
