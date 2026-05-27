@@ -20,12 +20,22 @@ jobs:
         run: |
           today="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
           time="$(TZ=Asia/Shanghai date +%H:%M)"
+          day_index="$(TZ=Asia/Shanghai date +%j)"
           case "$time" in
-            11:*) step="第 1 次"; progress="500 / 1500ml" ;;
-            15:*) step="第 2 次"; progress="1000 / 1500ml" ;;
-            20:*) step="第 3 次"; progress="1500 / 1500ml" ;;
-            *) step="测试提醒"; progress="本次测试不计入进度" ;;
+            11:*) step="第 1 次"; progress="500 / 1500ml"; slot=0 ;;
+            15:*) step="第 2 次"; progress="1000 / 1500ml"; slot=1 ;;
+            20:*) step="第 3 次"; progress="1500 / 1500ml"; slot=2 ;;
+            *) step="测试提醒"; progress="本次测试不计入进度"; slot=3 ;;
           esac
+          flirt_lines=(
+            "乖，先把水喝了，再去忙别的。"
+            "别装忙，先喝两口水再继续。"
+            "今天也要乖一点，水先安排上。"
+            "这条提醒不许划走，先把水喝了。"
+            "饭饭同学，补水这件事可不能偷懒。"
+            "小口慢喝，别让自己干巴巴的。"
+          )
+          flirt_line="${flirt_lines[$(( (10#$day_index + slot) % ${#flirt_lines[@]} ))]}"
 
           {
             echo "TODAY=$today"
@@ -42,7 +52,7 @@ jobs:
           当前进度：$progress
 
           乖，先放下手头的事，喝几口水再继续忙。
-          不许偷偷忽略这条提醒，今天也要好好照顾自己。
+          $flirt_line
           EOF
 
       - name: Send reminder email
