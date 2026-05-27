@@ -2,8 +2,10 @@ name: Water reminder
 
 on:
   schedule:
-    # 03:00 UTC is 11:00 in Asia/Shanghai.
+    # Asia/Shanghai reminders: 11:00, 15:00, 20:00.
     - cron: "0 3 * * *"
+    - cron: "0 7 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -20,7 +22,22 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           today="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
+          time="$(TZ=Asia/Shanghai date +%H:%M)"
+          case "$time" in
+            11:*) step="第 1 次"; progress="500 / 1500ml" ;;
+            15:*) step="第 2 次"; progress="1000 / 1500ml" ;;
+            20:*) step="第 3 次"; progress="1500 / 1500ml" ;;
+            *) step="测试提醒"; progress="本次测试不计入进度" ;;
+          esac
+
           gh issue create \
             --repo "$REPO" \
-            --title "喝水提醒 $today" \
-            --body "@laohan6 现在是每日喝水提醒时间。今天的目标：喝水 1500ml。"
+            --title "喝水提醒 $today $time" \
+            --body "@laohan6 该喝水啦。
+
+本次建议：喝水 500ml
+今日目标：1500ml
+当前进度：$progress
+提醒阶段：$step
+
+小口慢喝就好，别等口渴了再补水。"
