@@ -2,7 +2,6 @@ name: Water reminder
 
 on:
   schedule:
-    # Asia/Shanghai reminders: 11:00, 15:00, 20:00.
     - cron: "0 3 * * *"
     - cron: "0 7 * * *"
     - cron: "0 12 * * *"
@@ -21,50 +20,51 @@ jobs:
           today="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
           time="$(TZ=Asia/Shanghai date +%H:%M)"
           day_index="$(TZ=Asia/Shanghai date +%j)"
-          case "$time" in
-            11:*) step="第 1 次"; progress="500 / 1500ml"; slot=0 ;;
-            15:*) step="第 2 次"; progress="1000 / 1500ml"; slot=1 ;;
-            20:*) step="第 3 次"; progress="1500 / 1500ml"; slot=2 ;;
-            *) step="测试提醒"; progress="本次测试不计入进度"; slot=3 ;;
-          esac
-          joke_lines=(
-            "今日笑话：水不喝，灵感会先渴着。"
-            "今日笑话：再忙也要给身体发个补水红包。"
-            "今日笑话：你可以先忙，但水不能一直下班。"
-            "今日笑话：状态再满，也别忘了给自己续个水。"
-            "今日笑话：喝水不是任务，是给自己充电。"
-            "今日笑话：小口慢喝，快乐加倍。"
-          )
-          joke_line="${joke_lines[$(( (10#$day_index + slot) % ${#joke_lines[@]} ))]}"
 
-          encouragement_lines=(
-            "你今天已经很棒了，顺手把这杯水也完成一下吧。"
-            "乖乖喝完这一杯，今天的你会更稳一点。"
-            "做得很好，再补点水，状态会更舒服。"
-            "你已经很会照顾事情了，也记得照顾自己。"
-            "继续保持这个节奏，喝水这步也算你赢。"
-            "今天的你很不错，再喝点水就更圆满了。"
+          case "$time" in
+            11:*) step="第 1 次"; progress="500 / 1500ml"; slot=0; emoji="☀️" ;;
+            15:*) step="第 2 次"; progress="1000 / 1500ml"; slot=1; emoji="🌤️" ;;
+            20:*) step="第 3 次"; progress="1500 / 1500ml"; slot=2; emoji="🌙" ;;
+            *) step="测试提醒"; progress="本次测试不计入进度"; slot=3; emoji="🧪" ;;
+          esac
+
+          jokes=(
+            "今日小句：节奏越忙，越需要给身体留一点空隙。"
+            "今日小句：水不是任务，是状态的底色。"
+            "今日小句：把水喝好，很多事会顺一点。"
+            "今日小句：人一稳，很多细节就开始清亮。"
+            "今日小句：慢一点喝，反而更接近效率。"
+            "今日小句：先补水，再继续发力。"
           )
-          encouragement_line="${encouragement_lines[$(( (10#$day_index + slot) % ${#encouragement_lines[@]} ))]}"
+          joke="${jokes[$(( (10#$day_index + slot) % ${#jokes[@]} ))]}"
+
+          encouragers=(
+            "你已经把很多事情处理得很漂亮了，也别忘了照顾自己。"
+            "真正的稳定，不只来自节奏，也来自把自己放进计划里。"
+            "今天做到这里已经很好，继续保持，后面会越来越顺。"
+            "能坚持到现在，本身就说明你有很强的分寸和韧性。"
+            "每一次按时补水，都是在把状态往更好的方向推一点。"
+            "把这杯喝完，今天的你会更从容。"
+          )
+          encouragement="${encouragers[$(( (10#$day_index + slot) % ${#encouragers[@]} ))]}"
 
           {
             echo "TODAY=$today"
             echo "TIME=$time"
-            echo "SUBJECT=喝水提醒 $today $time"
+            echo "SUBJECT=喝水提醒 · $time $emoji"
           } >> "$GITHUB_ENV"
 
           cat > reminder-body.txt <<EOF
-          饭饭同学，该喝水啦。
+          喝水时间到了。
 
-          这是今天的 $step 喝水小任务：
+          今天的 $step 喝水小任务 $emoji
           本次建议：慢慢喝 500ml
           今日目标：1500ml
           当前进度：$progress
 
-          乖，先放下手头的事，喝几口水再继续忙。
-          $joke_line
+          $joke
 
-          $encouragement_line
+          $encouragement
           EOF
 
       - name: Send reminder email
@@ -109,7 +109,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           {
-            echo "@laohan6 邮件提醒任务已运行。"
+            echo "邮件提醒任务已运行。"
             echo
             cat reminder-body.txt
           } > issue-body.txt
