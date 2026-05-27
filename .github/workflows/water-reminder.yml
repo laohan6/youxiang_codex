@@ -95,7 +95,7 @@ jobs:
               body = f.read()
 
           msg = EmailMessage()
-          msg["From"] = f"Water Reminder <{user}>"
+          msg["From"] = f"饭饭的提醒 <{user}>"
           msg["To"] = mail_to
           msg["Subject"] = subject
           msg.set_content(body)
