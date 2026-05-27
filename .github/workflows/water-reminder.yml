@@ -1,0 +1,26 @@
+name: Water reminder
+
+on:
+  schedule:
+    # 03:00 UTC is 11:00 in Asia/Shanghai.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create reminder issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          today="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
+          gh issue create \
+            --repo "$REPO" \
+            --title "喝水提醒 $today" \
+            --body "@laohan6 现在是每日喝水提醒时间。今天的目标：喝水 1500ml。"
