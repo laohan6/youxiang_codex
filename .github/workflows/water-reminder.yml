@@ -24,31 +24,31 @@ jobs:
           day_index="$(TZ=Asia/Shanghai date +%j)"
 
           case "$time" in
-            10:*) step="第 1 次"; progress="300 / 1500ml"; slot=0; emoji="☀️" ;;
-            12:*) step="第 2 次"; progress="600 / 1500ml"; slot=1; emoji="🍽️" ;;
-            14:*) step="第 3 次"; progress="900 / 1500ml"; slot=2; emoji="🌤️" ;;
-            18:*) step="第 4 次"; progress="1200 / 1500ml"; slot=3; emoji="🌆" ;;
-            20:*) step="第 5 次"; progress="1500 / 1500ml"; slot=4; emoji="🌙" ;;
-            *) step="测试提醒"; progress="本次测试不计入进度"; slot=5; emoji="🧪" ;;
+            10:*) step="第 1 次"; progress="300 / 1500ml"; percent="20"; slot=0; emoji="☀️" ;;
+            12:*) step="第 2 次"; progress="600 / 1500ml"; percent="40"; slot=1; emoji="🍽️" ;;
+            14:*) step="第 3 次"; progress="900 / 1500ml"; percent="60"; slot=2; emoji="🌤️" ;;
+            18:*) step="第 4 次"; progress="1200 / 1500ml"; percent="80"; slot=3; emoji="🌆" ;;
+            20:*) step="第 5 次"; progress="1500 / 1500ml"; percent="100"; slot=4; emoji="🌙" ;;
+            *) step="测试提醒"; progress="本次测试不计入进度"; percent="20"; slot=5; emoji="🧪" ;;
           esac
 
-          jokes=(
-            "今日小句：节奏越忙，越需要给身体留一点空隙。"
-            "今日小句：水不是任务，是状态的底色。"
-            "今日小句：把水喝好，很多事会顺一点。"
-            "今日小句：人一稳，很多细节就开始清亮。"
-            "今日小句：慢一点喝，反而更接近效率。"
-            "今日小句：先补水，再继续发力。"
+          notes=(
+            "今日小句：越是繁忙，越值得给身体留一个安静的间隙。"
+            "今日小句：水不是任务清单的一项，是状态慢慢变好的底色。"
+            "今日小句：把细小的照顾做好，很多事会自然顺一点。"
+            "今日小句：稳定不是用力撑住，而是懂得及时补给。"
+            "今日小句：慢一点喝，也是一种把节奏拿回来的方式。"
+            "今日小句：先让身体舒服一点，再继续向前。"
           )
-          joke="${jokes[$(( (10#$day_index + slot) % ${#jokes[@]} ))]}"
+          note="${notes[$(( (10#$day_index + slot) % ${#notes[@]} ))]}"
 
           encouragers=(
-            "你已经把很多事情处理得很漂亮了，也别忘了照顾自己。"
-            "真正的稳定，不只来自节奏，也来自把自己放进计划里。"
-            "今天做到这里已经很好，继续保持，后面会越来越顺。"
-            "能坚持到现在，本身就说明你有很强的分寸和韧性。"
-            "每一次按时补水，都是在把状态往更好的方向推一点。"
-            "把这杯喝完，今天的你会更从容。"
+            "你已经把很多事情处理得很漂亮了，也记得把自己放在同样重要的位置。"
+            "真正可靠的节奏，不是一直往前赶，而是知道什么时候照顾自己。"
+            "今天做到这里已经很好，保持这份稳，会慢慢看见回报。"
+            "能持续认真地生活，本身就是一种难得的能力。"
+            "每一次按时补水，都是在替之后的自己保留一点余裕。"
+            "把这杯喝完，今天会多一点清醒，也多一点从容。"
           )
           encouragement="${encouragers[$(( (10#$day_index + slot) % ${#encouragers[@]} ))]}"
 
@@ -58,8 +58,9 @@ jobs:
             echo "SUBJECT=喝水提醒 · $time $emoji"
             echo "STEP=$step"
             echo "PROGRESS=$progress"
+            echo "PERCENT=$percent"
             echo "EMOJI=$emoji"
-            echo "JOKE=$joke"
+            echo "NOTE=$note"
             echo "ENCOURAGEMENT=$encouragement"
           } >> "$GITHUB_ENV"
 
@@ -71,7 +72,7 @@ jobs:
           今日目标：1500ml
           当前进度：$progress
 
-          $joke
+          $note
 
           $encouragement
           EOF
@@ -95,9 +96,12 @@ jobs:
           subject = os.environ.get("SUBJECT", "喝水提醒").strip()
           step = os.environ.get("STEP", "第 1 次").strip()
           progress = os.environ.get("PROGRESS", "300 / 1500ml").strip()
+          percent = os.environ.get("PERCENT", "20").strip()
           emoji = os.environ.get("EMOJI", "☀️").strip()
-          joke = os.environ.get("JOKE", "").strip()
+          note = os.environ.get("NOTE", "").strip()
           encouragement = os.environ.get("ENCOURAGEMENT", "").strip()
+          time = os.environ.get("TIME", "").strip()
+          today = os.environ.get("TODAY", "").strip()
 
           if not user or not password or not mail_to:
               raise SystemExit("Missing SMTP_USER, SMTP_PASS, or MAIL_TO secret.")
@@ -105,11 +109,15 @@ jobs:
           with open("reminder-body.txt", "r", encoding="utf-8") as f:
               text_body = f.read()
 
-          safe_joke = html.escape(joke)
-          safe_encouragement = html.escape(encouragement)
           safe_subject = html.escape(subject)
           safe_step = html.escape(step)
           safe_progress = html.escape(progress)
+          safe_percent = html.escape(percent)
+          safe_emoji = html.escape(emoji)
+          safe_note = html.escape(note)
+          safe_encouragement = html.escape(encouragement)
+          safe_time = html.escape(time)
+          safe_today = html.escape(today)
           safe_email = html.escape(mail_to)
 
           html_body = f"""\
@@ -119,29 +127,76 @@ jobs:
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
           </head>
-          <body style="margin:0;background:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1f2937;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f6f8;padding:32px 12px;">
+          <body style="margin:0;padding:0;background:#eef3f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',Arial,sans-serif;color:#17202a;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eef3f5;padding:36px 12px;">
               <tr>
                 <td align="center">
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border-radius:22px;overflow:hidden;border:1px solid #dde7ea;box-shadow:0 16px 42px rgba(31,45,61,0.10);">
                     <tr>
-                      <td style="padding:22px 24px;border-bottom:1px solid #eef2f7;background:#fcfcfd;">
-                        <div style="font-size:12px;letter-spacing:.04em;color:#6b7280;margin-bottom:8px;">饭饭的提醒</div>
-                        <div style="font-size:22px;line-height:1.35;font-weight:700;color:#111827;">{safe_subject}</div>
+                      <td style="padding:30px 30px 26px;background:#102027;">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="vertical-align:top;">
+                              <div style="font-size:12px;line-height:1.4;letter-spacing:.12em;text-transform:uppercase;color:#9fb8bf;margin-bottom:12px;">饭饭的提醒</div>
+                              <div style="font-size:28px;line-height:1.25;font-weight:700;color:#ffffff;">喝水时间到了</div>
+                              <div style="font-size:14px;line-height:1.7;color:#c7d5d9;margin-top:8px;">{safe_today} · {safe_time}</div>
+                            </td>
+                            <td align="right" style="vertical-align:top;width:72px;">
+                              <div style="display:inline-block;width:54px;height:54px;line-height:54px;text-align:center;border-radius:18px;background:#f6c453;color:#102027;font-size:26px;">{safe_emoji}</div>
+                            </td>
+                          </tr>
+                        </table>
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding:24px;">
-                        <div style="font-size:16px;line-height:1.8;margin-bottom:16px;">喝水时间到了。</div>
-                        <div style="border:1px solid #e5e7eb;border-radius:14px;padding:18px 18px 14px;background:#fafafa;margin-bottom:18px;">
-                          <div style="font-size:18px;line-height:1.5;font-weight:700;margin-bottom:8px;">今天的 {safe_step} 喝水小任务 {html.escape(emoji)}</div>
-                          <div style="font-size:15px;line-height:1.8;color:#374151;">本次建议：<strong>慢慢喝 300ml</strong></div>
-                          <div style="font-size:15px;line-height:1.8;color:#374151;">今日目标：<strong>1500ml</strong></div>
-                          <div style="font-size:15px;line-height:1.8;color:#374151;">当前进度：<strong>{safe_progress}</strong></div>
-                        </div>
-                        <div style="font-size:15px;line-height:1.9;color:#374151;margin-bottom:12px;">{safe_joke}</div>
-                        <div style="font-size:15px;line-height:1.9;color:#111827;font-weight:600;">{safe_encouragement}</div>
-                        <div style="margin-top:20px;font-size:12px;line-height:1.6;color:#9ca3af;">发送到：{safe_email}</div>
+                      <td style="padding:28px 30px 30px;">
+                        <div style="font-size:13px;line-height:1.4;color:#5f6f75;margin-bottom:10px;">今日进度</div>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7faf9;border:1px solid #e1ebe8;border-radius:18px;">
+                          <tr>
+                            <td style="padding:22px;">
+                              <div style="font-size:20px;line-height:1.45;font-weight:700;color:#17202a;margin-bottom:12px;">{safe_step} 喝水小任务</div>
+                              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                  <td style="font-size:14px;line-height:1.8;color:#52636a;">本次建议</td>
+                                  <td align="right" style="font-size:14px;line-height:1.8;color:#17202a;font-weight:700;">慢慢喝 300ml</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-size:14px;line-height:1.8;color:#52636a;">今日目标</td>
+                                  <td align="right" style="font-size:14px;line-height:1.8;color:#17202a;font-weight:700;">1500ml</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-size:14px;line-height:1.8;color:#52636a;">当前进度</td>
+                                  <td align="right" style="font-size:14px;line-height:1.8;color:#17202a;font-weight:700;">{safe_progress}</td>
+                                </tr>
+                              </table>
+                              <div style="height:10px;background:#dce8e5;border-radius:999px;overflow:hidden;margin-top:16px;">
+                                <div style="height:10px;width:{safe_percent}%;background:#2f8f83;border-radius:999px;"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <div style="height:18px;line-height:18px;">&nbsp;</div>
+
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="padding:18px 20px;background:#fffaf0;border-left:4px solid #f0b84d;border-radius:14px;font-size:15px;line-height:1.85;color:#39464b;">
+                              {safe_note}
+                            </td>
+                          </tr>
+                        </table>
+
+                        <div style="height:14px;line-height:14px;">&nbsp;</div>
+
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="padding:18px 20px;background:#f4f7fb;border-left:4px solid #6f8fb5;border-radius:14px;font-size:15px;line-height:1.85;color:#17202a;font-weight:600;">
+                              {safe_encouragement}
+                            </td>
+                          </tr>
+                        </table>
+
+                        <div style="font-size:12px;line-height:1.7;color:#8a99a0;margin-top:24px;text-align:center;">发送到 {safe_email}</div>
                       </td>
                     </tr>
                   </table>
