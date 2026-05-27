@@ -16,10 +16,7 @@ jobs:
   remind:
     runs-on: ubuntu-latest
     steps:
-      - name: Create reminder issue
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
+      - name: Prepare reminder
         run: |
           today="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
           time="$(TZ=Asia/Shanghai date +%H:%M)"
@@ -30,8 +27,14 @@ jobs:
             *) step="测试提醒"; progress="本次测试不计入进度" ;;
           esac
 
+          {
+            echo "TODAY=$today"
+            echo "TIME=$time"
+            echo "SUBJECT=喝水提醒 $today $time"
+          } >> "$GITHUB_ENV"
+
           cat > reminder-body.txt <<EOF
-          @laohan6 宝贝，该喝水啦。
+          宝贝，该喝水啦。
 
           这是今天的 $step 喝水小任务：
           本次建议：慢慢喝 500ml
@@ -42,7 +45,47 @@ jobs:
           不许偷偷忽略这条提醒，今天也要好好照顾自己。
           EOF
 
+      - name: Send reminder email
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: |
+          if [ -z "$SMTP_USER" ] || [ -z "$SMTP_PASS" ] || [ -z "$MAIL_TO" ]; then
+            echo "Missing SMTP_USER, SMTP_PASS, or MAIL_TO secret."
+            exit 1
+          fi
+
+          {
+            echo "From: Water Reminder <$SMTP_USER>"
+            echo "To: $MAIL_TO"
+            echo "Subject: $SUBJECT"
+            echo "MIME-Version: 1.0"
+            echo "Content-Type: text/plain; charset=UTF-8"
+            echo
+            cat reminder-body.txt
+          } > email.txt
+
+          curl --url "smtps://smtp.qq.com:465" \
+            --ssl-reqd \
+            --mail-from "$SMTP_USER" \
+            --mail-rcpt "$MAIL_TO" \
+            --user "$SMTP_USER:$SMTP_PASS" \
+            --upload-file email.txt
+
+      - name: Create backup issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            echo "@laohan6 邮件提醒任务已运行。"
+            echo
+            cat reminder-body.txt
+          } > issue-body.txt
+
           gh issue create \
             --repo "$REPO" \
-            --title "喝水提醒 $today $time" \
-            --body-file reminder-body.txt
+            --title "$SUBJECT" \
+            --body-file issue-body.txt
