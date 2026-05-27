@@ -31,14 +31,15 @@ jobs:
           esac
 
           cat > reminder-body.txt <<EOF
-          @laohan6 该喝水啦。
+          @laohan6 宝贝，该喝水啦。
 
-          本次建议：喝水 500ml
+          这是今天的 $step 喝水小任务：
+          本次建议：慢慢喝 500ml
           今日目标：1500ml
           当前进度：$progress
-          提醒阶段：$step
 
-          小口慢喝就好，别等口渴了再补水。
+          乖，先放下手头的事，喝几口水再继续忙。
+          不许偷偷忽略这条提醒，今天也要好好照顾自己。
           EOF
 
           gh issue create \
