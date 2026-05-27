@@ -30,14 +30,18 @@ jobs:
             *) step="测试提醒"; progress="本次测试不计入进度" ;;
           esac
 
+          cat > reminder-body.txt <<EOF
+          @laohan6 该喝水啦。
+
+          本次建议：喝水 500ml
+          今日目标：1500ml
+          当前进度：$progress
+          提醒阶段：$step
+
+          小口慢喝就好，别等口渴了再补水。
+          EOF
+
           gh issue create \
             --repo "$REPO" \
             --title "喝水提醒 $today $time" \
-            --body "@laohan6 该喝水啦。
-
-本次建议：喝水 500ml
-今日目标：1500ml
-当前进度：$progress
-提醒阶段：$step
-
-小口慢喝就好，别等口渴了再补水。"
+            --body-file reminder-body.txt
