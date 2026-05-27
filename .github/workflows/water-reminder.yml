@@ -27,15 +27,25 @@ jobs:
             20:*) step="第 3 次"; progress="1500 / 1500ml"; slot=2 ;;
             *) step="测试提醒"; progress="本次测试不计入进度"; slot=3 ;;
           esac
-          flirt_lines=(
-            "乖，先把水喝了，再去忙别的。"
-            "别装忙，先喝两口水再继续。"
-            "今天也要乖一点，水先安排上。"
-            "这条提醒不许划走，先把水喝了。"
-            "饭饭同学，补水这件事可不能偷懒。"
-            "小口慢喝，别让自己干巴巴的。"
+          joke_lines=(
+            "今日笑话：水不喝，灵感会先渴着。"
+            "今日笑话：再忙也要给身体发个补水红包。"
+            "今日笑话：你可以先忙，但水不能一直下班。"
+            "今日笑话：状态再满，也别忘了给自己续个水。"
+            "今日笑话：喝水不是任务，是给自己充电。"
+            "今日笑话：小口慢喝，快乐加倍。"
           )
-          flirt_line="${flirt_lines[$(( (10#$day_index + slot) % ${#flirt_lines[@]} ))]}"
+          joke_line="${joke_lines[$(( (10#$day_index + slot) % ${#joke_lines[@]} ))]}"
+
+          encouragement_lines=(
+            "你今天已经很棒了，顺手把这杯水也完成一下吧。"
+            "乖乖喝完这一杯，今天的你会更稳一点。"
+            "做得很好，再补点水，状态会更舒服。"
+            "你已经很会照顾事情了，也记得照顾自己。"
+            "继续保持这个节奏，喝水这步也算你赢。"
+            "今天的你很不错，再喝点水就更圆满了。"
+          )
+          encouragement_line="${encouragement_lines[$(( (10#$day_index + slot) % ${#encouragement_lines[@]} ))]}"
 
           {
             echo "TODAY=$today"
@@ -52,7 +62,9 @@ jobs:
           当前进度：$progress
 
           乖，先放下手头的事，喝几口水再继续忙。
-          $flirt_line
+          $joke_line
+
+          $encouragement_line
           EOF
 
       - name: Send reminder email
