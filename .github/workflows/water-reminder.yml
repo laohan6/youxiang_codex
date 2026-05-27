@@ -34,7 +34,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
           cat > reminder-body.txt <<EOF
-          宝贝，该喝水啦。
+          饭饭同学，该喝水啦。
 
           这是今天的 $step 喝水小任务：
           本次建议：慢慢喝 500ml
