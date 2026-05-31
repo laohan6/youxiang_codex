@@ -2,6 +2,8 @@ name: Water reminder
 
 on:
   schedule:
+    # GitHub Actions cron uses UTC.
+    # These are Asia/Shanghai reminders: 10:00, 12:00, 14:00, 18:00, 20:00.
     - cron: "0 2 * * *"
     - cron: "0 4 * * *"
     - cron: "0 6 * * *"
@@ -21,15 +23,28 @@ jobs:
         run: |
           today="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
           time="$(TZ=Asia/Shanghai date +%H:%M)"
+          hour="$(TZ=Asia/Shanghai date +%H)"
           day_index="$(TZ=Asia/Shanghai date +%j)"
 
-          case "$time" in
-            10:*) step="第 1 次"; progress="300 / 1500ml"; percent="20"; slot=0; emoji="☀️" ;;
-            12:*) step="第 2 次"; progress="600 / 1500ml"; percent="40"; slot=1; emoji="🍽️" ;;
-            14:*) step="第 3 次"; progress="900 / 1500ml"; percent="60"; slot=2; emoji="🌤️" ;;
-            18:*) step="第 4 次"; progress="1200 / 1500ml"; percent="80"; slot=3; emoji="🌆" ;;
-            20:*) step="第 5 次"; progress="1500 / 1500ml"; percent="100"; slot=4; emoji="🌙" ;;
-            *) step="测试提醒"; progress="本次测试不计入进度"; percent="20"; slot=5; emoji="🧪" ;;
+          case "$hour" in
+            10) step="第 1 次"; progress="300 / 1500ml"; percent="20"; slot=0; emoji="☀️" ;;
+            12) step="第 2 次"; progress="600 / 1500ml"; percent="40"; slot=1; emoji="🍽️" ;;
+            14) step="第 3 次"; progress="900 / 1500ml"; percent="60"; slot=2; emoji="🌤️" ;;
+            18) step="第 4 次"; progress="1200 / 1500ml"; percent="80"; slot=3; emoji="🌆" ;;
+            20) step="第 5 次"; progress="1500 / 1500ml"; percent="100"; slot=4; emoji="🌙" ;;
+            *)
+              if [ "$hour" -lt 12 ]; then
+                step="第 1 次"; progress="300 / 1500ml"; percent="20"; slot=0; emoji="☀️"
+              elif [ "$hour" -lt 14 ]; then
+                step="第 2 次"; progress="600 / 1500ml"; percent="40"; slot=1; emoji="🍽️"
+              elif [ "$hour" -lt 18 ]; then
+                step="第 3 次"; progress="900 / 1500ml"; percent="60"; slot=2; emoji="🌤️"
+              elif [ "$hour" -lt 20 ]; then
+                step="第 4 次"; progress="1200 / 1500ml"; percent="80"; slot=3; emoji="🌆"
+              else
+                step="第 5 次"; progress="1500 / 1500ml"; percent="100"; slot=4; emoji="🌙"
+              fi
+              ;;
           esac
 
           notes=(
